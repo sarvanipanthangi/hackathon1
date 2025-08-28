@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rainfall Explorer with Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="style1.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f8ff;
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      height: 60vh;
+      width: 100%;
+    }
+
+    .content {
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    label, input {
+      font-size: 1rem;
+      margin: 5px 10px 5px 0;
+    }
+
+    #fetchBtn {
+      padding: 8px 15px;
+      font-size: 1rem;
+      cursor: pointer;
+      background-color: #0077ff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin-left: 10px;
+      transition: background-color 0.3s;
+    }
+
+    #fetchBtn:hover {
+      background-color: #005fcb;
+    }
+
+    #rainfallResult {
+      margin-top: 20px;
+      font-size: 1.1rem;
+    }
+
+    canvas {
+      margin-top: 30px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .popup-content {
+      text-align: center;
+    }
+
+    .popup-content button {
+      padding: 8px 12px;
+      background: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .popup-content button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Map Section -->
+  <div id="map"></div>
+
+  <!-- Chart & Input Section -->
+  <div class="content">
+    <h1>🌧 Rainfall Explorer</h1>
+    <p>Data from NASA POWER API</p>
+
+    <label for="lat">Latitude:</label>
+    <input type="text" id="lat" value="28" />
+    <label for="lon">Longitude:</label>
+    <input type="text" id="lon" value="77" />
+    <button id="fetchBtn">Get Rainfall (Last 7 Days)</button>
+
+    <div id="rainfallResult" style="scroll-margin-top: 20px;"></div>
+    <canvas id="rainChart" width="400" height="200"></canvas>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const locations = [
+      { title: "Atacama Desert", description: "The driest desert on Earth, with some areas receiving no rainfall for centuries.", lat: -24.5, lon: -68.2 },
+      { title: "McMurdo Dry Valleys", description: "The driest place on Earth, with extremely low humidity and almost no ice or snow cover.", lat: -77.5, lon: 163.5 },
+      { title: "Sonoran Desert", description: "A desert region shared by the USA and Mexico, known for its unique flora and fauna.", lat: 32.0, lon: -113.0 },
+      { title: "Sahara Desert", description: "The largest hot desert in the world, spanning across multiple countries.", lat: 23.0, lon: 13.0 }
+    ];
+
+    const map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    locations.forEach(loc => {
+      const popupContent = `
+        <div class="popup-content">
+          <h3>${loc.title}</h3>
+          <p>${loc.description}</p>
+          <button onclick="updateLocation(${loc.lat}, ${loc.lon})">View Live Data</button>
+        </div>
+      `;
+      L.marker([loc.lat, loc.lon]).addTo(map).bindPopup(popupContent);
+    });
+
+    function updateLocation(lat, lon) {
+      document.getElementById("lat").value = lat;
+      document.getElementById("lon").value = lon;
+      getRainfall(lat, lon);
+
+      // Scroll to chart
+      document.querySelector('.content').scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+
+  <script>
+    let rainfallChart = null;
+
+    async function getRainfall(lat, lon) {
+      const latInput = document.getElementById("lat");
+      const lonInput = document.getElementById("lon");
+
+      const useLat = lat !== undefined ? lat : latInput.value;
+      const useLon = lon !== undefined ? lon : lonInput.value;
+
+      latInput.value = useLat;
+      lonInput.value = useLon;
+
+      const today = new Date();
+      const endDate = today.toISOString().slice(0, 10).replace(/-/g, "");
+      const pastDate = new Date();
+      pastDate.setDate(today.getDate() - 6);
+      const startDate = pastDate.toISOString().slice(0, 10).replace(/-/g, "");
+
+      const url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR&community=AG&longitude=${useLon}&latitude=${useLat}&start=${startDate}&end=${endDate}&format=JSON`;
+
+      const resultEl = document.getElementById("rainfallResult");
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        const rainfallData = data?.properties?.parameter?.PRECTOTCORR || {};
+
+        const dates = [];
+        const values = [];
+        let rainDetected = false;
+
+        function formatDate(yyyymmdd) {
+          const y = yyyymmdd.slice(0, 4);
+          const m = yyyymmdd.slice(4, 6);
+          const d = yyyymmdd.slice(6, 8);
+          const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+          return `${d} ${months[parseInt(m, 10)-1]} ${y}`;
+        }
+
+        Object.entries(rainfallData).forEach(([date, value]) => {
+          if (value !== -999) {
+            dates.push(formatDate(date));
+            values.push(value);
+            if (value > 0) rainDetected = true;
+          }
+        });
+
+        let output = "<h3>📅 Rainfall in last 7 days:</h3>";
+        if (dates.length === 0) {
+          output += "<p>No valid data returned.</p>";
+        } else {
+          output += "<ul>";
+          dates.forEach((d, i) => {
+            output += `<li>${d}: ${values[i]} mm/day</li>`;
+          });
+          output += "</ul>";
+          if (!rainDetected) output += "<p>🌵 No rainfall detected in the past 7 days.</p>";
+        }
+        resultEl.innerHTML = output;
+
+        const ctx = document.getElementById("rainChart").getContext("2d");
+        if (rainfallChart) rainfallChart.destroy();
+
+        rainfallChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: dates,
+            datasets: [{
+              label: "Rainfall (mm/day)",
+              data: values,
+              backgroundColor: "rgba(54, 162, 235, 0.6)",
+              borderColor: "rgba(54, 162, 235, 1)",
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: true } },
+            scales: {
+              y: { beginAtZero: true, title: { display: true, text: "mm/day" } }
+            }
+          }
+        });
+
+      } catch (err) {
+        console.error(err);
+        resultEl.textContent = "⚠️ Error fetching rainfall data.";
+      }
+    }
+    
+    document.getElementById("fetchBtn").addEventListener("click", () => {
+      const lat = document.getElementById("lat").value;
+      const lon = document.getElementById("lon").value;
+      getRainfall(lat, lon);
+    });
+
+    window.onload = () => {
+      getRainfall(); // default load
+    };
+    
+  </script>
+  <div class="page-buttons">
+  <button onclick="location.href='rainfall.html'">Previous - Rainfall</button>
+  <button onclick="location.href='drought.html'">Next - Drought</button>
+</div>
+
+</body>
+</html>

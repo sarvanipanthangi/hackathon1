@@ -1,0 +1,425 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navbar */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 50px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.3rem;
+}
+
+.logo img {
+  height: 28px;
+  margin-right: 10px;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+nav ul li a {
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+nav ul li a:hover {
+  color: #00ff99;
+}
+
+/* Hero Section */
+.hero {
+  height: 100vh;
+  background: url("images/banner.jpg") no-repeat center center/cover;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6); /* Dark overlay */
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  color: white;
+  z-index: 2;
+  max-width: 700px;
+}
+
+.hero-content h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+/* Problem Section */
+.problem {
+  padding: 80px 10%;
+  background: transparent;
+  color: white;
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.problem h2 {
+  margin-bottom: 20px;
+  font-size: 2rem;
+}
+
+/* Systems Grid */
+.systems {
+  padding: 50px 10%;
+  background: transparent;
+  text-align: center;
+  color: white;
+  position: relative;
+  z-index: 2;
+}
+
+.systems h2 {
+  margin-bottom: 30px;
+}
+
+.icons {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: rgba(0, 0, 0, 0.4); /* darker glassy effect */
+  padding: 20px;
+  border-radius: 15px;
+  backdrop-filter: blur(6px);
+  width: 150px;
+  transition: transform 0.3s, background 0.3s;
+}
+
+.card:hover {
+  transform: scale(1.08);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.card img {
+  height: 70px;
+  margin-bottom: 15px;
+}
+
+.card h3 {
+  color: white;
+}
+
+/* Buttons - earthy style */
+.cta-btn,
+.btn {
+  margin-top: 20px;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  background: #2e8b57;  /* earthy green */
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.cta-btn:hover,
+.btn:hover {
+  background: #246b45;  /* darker on hover */
+  transform: scale(1.04);
+}
+
+.btn-secondary {
+  background: #4682b4; /* muted blue */
+}
+
+.btn-secondary:hover {
+  background: #36648b;
+}
+
+/* Carousel Pages (Rainfall, Drought, etc.) */
+.card-carousel {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: 50px;
+  background: transparent;
+}
+
+/* Main Card */
+.main-card {
+  width: 600px;
+  height: 400px;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 20px;
+  padding: 40px;
+  color: white;
+  text-align: center;
+  z-index: 2;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+  transition: transform 0.5s ease;
+}
+
+.main-card img {
+  height: 100px;
+  margin-bottom: 15px;
+}
+
+.main-card h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.main-card p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* Side Cards (Carousel Peek Style) */
+.side-card {
+  position: absolute;
+  top: 50%;
+  width: 320px;
+  height: 380px;
+  transform: translateY(-50%) scale(0.9);
+  border-radius: 20px;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  z-index: 1;
+  opacity: 0.6;
+  transition: all 0.5s ease;
+}
+
+.side-card.leftr {
+  left: 8%;
+  background-image: url("images/help1.png");
+}
+
+.side-card.rightr {
+  right: 8%;
+  background-image: url("images/drought1.png");
+}
+.side-card.leftd {
+  left: 8%;
+  background-image: url("images/rainfall1.png");
+}
+
+.side-card.rightd {
+  right: 8%;
+  background-image: url("images/wildfires1.png");
+}
+.side-card.leftw {
+  left: 8%;
+  background-image: url("images/drought1.png");
+}
+
+.side-card.rightw {
+  right: 8%;
+  background-image: url("images/pollution1.png");
+}
+.side-card.lefth {
+  left: 8%;
+  background-image: url("images/wildfires1.png");
+}
+
+.side-card.righth {
+  right: 8%;
+  background-image: url("images/help1.png");
+}
+.side-card.leftp {
+  left: 8%;
+  background-image: url("images/wildfires1.png");
+}
+
+.side-card.rightp {
+  right: 8%;
+  background-image: url("images/help1.png");
+}
+
+
+.side-card h3 {
+  position: absolute;
+  bottom: 15px;
+  left: 20px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  background: rgba(0,0,0,0.5);
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.side-card:hover {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* Background Classes */
+.index-bg {
+  background: url("images/starss.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+.rainfall-bg {
+  background: url("images/rainfall-bg.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+.drought-bg {
+  background: url("images/drought-bg.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+.wildfire-bg {
+  background: url("images/wildfire-bg.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+.pollution-bg {
+  background: url("images/pollution-bg.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+.help-bg {
+  background: url("images/stars.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* Apply dark overlay across the entire page */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: -1;
+}
+/* Help Page Background */
+.help-bg {
+  background: url("images/help-bg.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* Help Section */
+.help-section {
+  padding: 80px 10%;
+  text-align: center;
+  color: white;
+  position: relative;
+  z-index: 2;
+}
+
+.help-section h2 {
+  font-size: 2rem;
+  margin-bottom: 40px;
+}
+
+.help-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  justify-content: center;
+}
+
+.help-card {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 25px;
+  border-radius: 15px;
+  backdrop-filter: blur(8px);
+  width: 280px;
+  text-align: left;
+  line-height: 1.6;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  transition: transform 0.3s ease;
+}
+
+.help-card:hover {
+  transform: translateY(-8px);
+}
+/* About Page */
+.about-bg {
+  background: url("images/about-bg.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+.about-section {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 15%;
+  text-align: center;
+  color: white;
+  position: relative;
+  z-index: 2;
+}
+
+.about-content {
+  background: rgba(0, 0, 0, 0.75);
+  padding: 40px;
+  border-radius: 20px;
+  max-width: 800px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+.about-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+.about-content p {
+  margin-bottom: 20px;
+  line-height: 1.7;
+  font-size: 1.1rem;
+}

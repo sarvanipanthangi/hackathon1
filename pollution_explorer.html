@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Air Pollution Explorer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        #map {
+            height: 65vh; /* Map takes up 65% of the viewport height */
+            width: 100%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .content {
+            padding: 20px;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+        h1 {
+            color: #5cb85c;
+            text-align: center;
+        }
+        #airPollutionResult {
+            margin-top: 20px;
+            text-align: left;
+        }
+        canvas {
+            margin-top: 20px;
+            max-width: 100%;
+            height: auto;
+        }
+        .popup-content {
+            text-align: center;
+        }
+        .popup-content button {
+            padding: 8px 12px;
+            background: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .popup-content button:hover {
+            background: #0056b3;
+        }
+        .page-buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .page-buttons button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 1rem;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .page-buttons button:hover {
+      background-color: #0056b3;
+    }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="content">
+        <h1>💨 Air Pollution Explorer</h1>
+        <p>Data from NASA POWER API</p>
+
+        <div id="airPollutionResult"></div>
+        <canvas id="airPollutionChart" width="400" height="200"></canvas>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const locations = [
+            { title: "New York City", description: "In August 2025, wildfire smoke from northern Canada caused New York City to rank as the 7th most polluted major city globally, with air quality reaching 'unhealthy' levels.", lat: 40.7128, lon: -74.0060 },
+            { title: "Los Angeles, USA", description: "In January 2025, wildfire smoke from nearby fires prompted school closures and air quality advisories across Los Angeles County.", lat: 34.0522, lon: -118.2437 },
+            { title: "Madrid, Spain", description: "In August 2025, wildfire smoke from fires in southern Europe degraded air quality in Madrid, with hazardous levels of PM2.5 and other pollutants.", lat: 40.4168, lon: -3.7038 },
+            { title: "Seoul, South Korea", description: "In March 2025, wildfires in North Gyeongsang Province led to exceptionally poor air quality in Seoul, with PM2.5 levels reaching 557μg/m³.", lat: 37.5665, lon: 126.9780 },
+            { title: "Izmir, Turkey", description: "In June 2025, wildfires in Izmir Province caused significant air pollution, leading to the evacuation of over 50,000 people and temporary closure of İzmir Adnan Menderes Airport.", lat: 38.4192, lon: 27.1287 },
+            { title: "Bengaluru, India", description: "In 2025, Bengaluru Urban ranked third among all Indian districts in terms of PM2.5 particulate emissions from diesel generator sets, contributing to air pollution.", lat: 12.9716, lon: 77.5946 }
+        ];
+
+        const map = L.map('map').setView([20, 77], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let airPollutionChart = null;
+
+        async function getAirPollution(lat, lon) {
+            const today = new Date();
+            const endDate = today.toISOString().slice(0, 10).replace(/-/g, "");
+            const pastDate = new Date();
+            pastDate.setDate(today.getDate() - 6);
+            const startDate = pastDate.toISOString().slice(0, 10).replace(/-/g, "");
+
+            const url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&community=AG&longitude=${lon}&latitude=${lat}&start=${startDate}&end=${endDate}&format=JSON`;
+
+            const resultEl = document.getElementById("airPollutionResult");
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+
+                const pollutionData = data?.properties?.parameter?.ALLSKY_SFC_SW_DWN || {};
+
+                const dates = [];
+                const values = [];
+
+                function formatDate(yyyymmdd) {
+                    const y = yyyymmdd.slice(0, 4);
+                    const m = yyyymmdd.slice(4, 6);
+                    const d = yyyymmdd.slice(6, 8);
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    return `${d} ${months[parseInt(m, 10) - 1]} ${y}`;
+                }
+
+                Object.entries(pollutionData).forEach(([date, value]) => {
+                    if (value !== -999) {
+                        dates.push(formatDate(date));
+                        values.push(value);
+                    }
+                });
+
+                let output = "<h3>📅 Solar Irradiance in last 7 days:</h3>";
+                if (dates.length === 0) {
+                    output += "<p>No valid data returned.</p>";
+                } else {
+                    output += "<ul>";
+                    dates.forEach((d, i) => {
+                        output += `<li>${d}: ${values[i]} W/m²</li>`;
+                    });
+                    output += "</ul>";
+                    output += "<p>Note: Higher values indicate less pollution/clearer skies.</p>";
+                }
+                resultEl.innerHTML = output;
+
+                const ctx = document.getElementById("airPollutionChart").getContext("2d");
+                if (airPollutionChart) airPollutionChart.destroy();
+
+                airPollutionChart = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: "Solar Irradiance (W/m²)",
+                            data: values,
+                            backgroundColor: "rgba(92, 184, 92, 0.6)",
+                            borderColor: "rgba(92, 184, 92, 1)",
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: true } },
+                        scales: {
+                            y: { beginAtZero: false, title: { display: true, text: "W/m²" } }
+                        }
+                    }
+                });
+
+                // Scroll to the chart section
+                document.querySelector('.content').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (err) {
+                console.error(err);
+                resultEl.textContent = "⚠️ Error fetching air pollution data.";
+            }
+        }
+
+        // Add markers and their click listeners
+        locations.forEach(loc => {
+            const popupContent = `
+                <div class="popup-content">
+                    <h3>${loc.title}</h3>
+                    <p>${loc.description}</p>
+                    <button onclick="getAirPollution(${loc.lat}, ${loc.lon})">View Live Data</button>
+                </div>
+            `;
+            L.marker([loc.lat, loc.lon]).addTo(map).bindPopup(popupContent);
+        });
+
+        // Optional: Fit map to show all markers on load
+        const markers = locations.map(loc => L.marker([loc.lat, loc.lon]));
+        if (markers.length > 0) {
+            const group = new L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.2));
+        }
+        </script>
+        <div class="page-buttons">
+        <button onclick="location.href='wildfire.html'">Previous - Wildfire</button>
+      <button onclick="location.href='help.html'">How you can help</button>
+    </div>
+</body>
+</html>
